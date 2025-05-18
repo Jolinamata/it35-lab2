@@ -5,8 +5,8 @@
   "type": "module",
   "homepage": "https//:Jolinamata.Github.io/it35-lab/",
   "scripts": {
-    "deploy": "npm run build",
-    "predeploy": "gh-pages -d dist",
+    "deploy": "gh-pages -d dist",
+    "predeploy": "ionic build",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
