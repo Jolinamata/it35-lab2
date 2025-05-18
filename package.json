@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https//:Jolinamata.Github.io/it35-lab2/",
+  "homepage": "https//:Jolinamata.Github.io/it35-lab2",
   "scripts": {
     "deploy": "gh-pages -d dist",
     "predeploy": "ionic build",
