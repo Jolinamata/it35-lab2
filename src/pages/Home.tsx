@@ -1,54 +1,240 @@
-import { 
-  IonIcon, 
-      IonLabel, 
-      IonRouterOutlet, 
-      IonTabBar, 
-      IonTabButton, 
-      IonTabs  } from '@ionic/react';
-import { IonReactRouter } from '@ionic/react-router';
-import { bookOutline, search, star } from 'ionicons/icons';
-import { Route, Redirect } from 'react-router';
+import {
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardContent,
+  IonText,
+  IonButton,
+  IonTextarea,
+  IonInput,
+  IonItem,
+  IonIcon,
+  IonLabel,
+  IonButtons,
+} from '@ionic/react';
+import { heartOutline, chatboxEllipsesOutline } from 'ionicons/icons';
+import { useState, useEffect } from 'react';
+import { useIonRouter } from '@ionic/react';
 
-import Favorites from './home-tabs/Favorites';
-import Feed from './home-tabs/Feed';
-import Search from './home-tabs/Search';
-  
-  const Home: React.FC = () => {
+type Post = {
+  id: number;
+  author: string;
+  content: string;
+  likes: number;
+  comments: string[];
+};
 
-    const tabs = [
-      {name:'Feed', tab:'feed',url: '/it35-lab/app/home/feed', icon: bookOutline},
-      {name:'Search', tab:'search', url: '/it35-lab/app/home/search', icon: search},
-      {name:'Favorites',tab:'favorites', url: '/it35-lab/app/home/favorites', icon: star},
-    ]
-    
-    return (
-      <IonReactRouter>
-        <IonTabs>
-          <IonTabBar slot="bottom">
+const Home: React.FC = () => {
+  const router = useIonRouter();
 
-            {tabs.map((item, index) => (
-              <IonTabButton key={index} tab={item.tab} href={item.url}>
-                <IonIcon icon={item.icon} />
-                <IonLabel>{item.name}</IonLabel>
-              </IonTabButton>
-            ))}
-            
-          </IonTabBar>
-        <IonRouterOutlet>
+  // 👉 useState for role and username to reactively redirect
+  const [role, setRole] = useState(localStorage.getItem('userRole'));
+  const [username, setUsername] = useState(localStorage.getItem('username'));
+  const canPost = role === 'teacher';
 
-        <Route exact path="/it35-lab/app/home/feed" render={() => <Feed />} />
-        <Route exact path="/it35-lab/app/home/search" render={() => <Search />} />
-        <Route exact path="/it35-lab/app/home/favorites" render={() => <Favorites />} />
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [newPostContent, setNewPostContent] = useState('');
+  const [commentInputs, setCommentInputs] = useState<{ [key: number]: string }>({});
 
+  // 🔁 Redirect to login if session is missing
+  useEffect(() => {
+    if (!role || !username) {
+      router.push('/login', 'root');
+    }
+  }, [role, username]); // 👈 watch these so logout triggers redirect
 
-          <Route exact path="/it35-lab/app/home">
-            <Redirect to="/it35-lab/app/home/feed" />
-          </Route>
+  useEffect(() => {
+    const storedPosts = localStorage.getItem('posts');
+    if (storedPosts) {
+      setPosts(JSON.parse(storedPosts));
+    } else {
+      const defaultPost: Post[] = [
+        {
+          id: 1,
+          author: 'Teacher',
+          content: 'This is a post from the teacher.',
+          likes: 0,
+          comments: [],
+        },
+      ];
+      setPosts(defaultPost);
+      localStorage.setItem('posts', JSON.stringify(defaultPost));
+    }
+  }, []);
 
-        </IonRouterOutlet>
-        </IonTabs>
-      </IonReactRouter>
-    );
+  const updatePosts = (newPosts: Post[]) => {
+    setPosts(newPosts);
+    localStorage.setItem('posts', JSON.stringify(newPosts));
   };
-  
-  export default Home;
+
+  const handlePost = () => {
+    if (newPostContent.trim() === '') return;
+    const newPost: Post = {
+      id: Date.now(),
+      author: username || 'Anonymous',
+      content: newPostContent,
+      likes: 0,
+      comments: [],
+    };
+    updatePosts([newPost, ...posts]);
+    setNewPostContent('');
+  };
+
+  const handleLike = (postId: number) => {
+    const updated = posts.map((post) =>
+      post.id === postId ? { ...post, likes: post.likes + 1 } : post
+    );
+    updatePosts(updated);
+  };
+
+  const handleComment = (postId: number) => {
+    const comment = commentInputs[postId]?.trim();
+    if (!comment) return;
+
+    const updated = posts.map((post) =>
+      post.id === postId
+        ? { ...post, comments: [...post.comments, comment] }
+        : post
+    );
+    updatePosts(updated);
+    setCommentInputs((prev) => ({ ...prev, [postId]: '' }));
+  };
+
+  const handleDelete = (postId: number) => {
+    updatePosts(posts.filter((post) => post.id !== postId));
+  };
+
+  const handleLogout = () => {
+    const confirmLogout = window.confirm('Are you sure you want to logout?');
+    if (confirmLogout) {
+      localStorage.clear();
+
+      // 🧠 Clear the state to trigger useEffect redirection
+      setRole(null);
+      setUsername(null);
+    }
+  };
+
+  return (
+    <IonPage>
+      <IonHeader>
+        <IonToolbar color="success">
+          <IonTitle>Class Wall</IonTitle>
+          <IonButtons slot="end">
+            <IonButton onClick={handleLogout} color="light">
+              Logout
+            </IonButton>
+          </IonButtons>
+        </IonToolbar>
+      </IonHeader>
+
+      <IonContent
+        fullscreen
+        className="ion-padding"
+        style={{
+          background: 'linear-gradient(to bottom right, #d2f0f4, #b2f7d2)',
+          minHeight: '100vh',
+        }}
+      >
+        <IonCard style={{ background: 'white', borderRadius: '12px' }}>
+          <IonCardContent>
+            <IonText>
+              <h2>Welcome, {role === 'teacher' ? 'Teacher' : 'Student'}!</h2>
+              <p>
+                This is the shared class wall.{' '}
+                {role === 'teacher'
+                  ? 'You can post and delete posts.'
+                  : 'You can like and comment on posts.'}
+              </p>
+            </IonText>
+          </IonCardContent>
+        </IonCard>
+
+        {canPost && (
+          <IonCard style={{ background: '#fff' }}>
+            <IonCardHeader>
+              <IonCardTitle>Create a Post</IonCardTitle>
+            </IonCardHeader>
+            <IonCardContent>
+              <IonTextarea
+                placeholder="Write something..."
+                value={newPostContent}
+                onIonChange={(e) => setNewPostContent(e.detail.value!)}
+              />
+              <IonButton expand="block" onClick={handlePost} className="ion-margin-top">
+                Post
+              </IonButton>
+            </IonCardContent>
+          </IonCard>
+        )}
+
+        {posts.map((post) => (
+          <IonCard key={post.id} style={{ backgroundColor: '#fefefe' }}>
+            <IonCardHeader>
+              <IonCardTitle>{post.author}'s Post</IonCardTitle>
+            </IonCardHeader>
+            <IonCardContent>
+              <IonText>{post.content}</IonText>
+              <div className="ion-margin-top">
+                <IonButton
+                  fill="clear"
+                  color="danger"
+                  onClick={() => handleLike(post.id)}
+                >
+                  <IonIcon icon={heartOutline} slot="start" />
+                  Like ({post.likes})
+                </IonButton>
+
+                {canPost && (
+                  <IonButton
+                    fill="clear"
+                    color="medium"
+                    onClick={() => handleDelete(post.id)}
+                    style={{ marginLeft: '10px' }}
+                  >
+                    🗑️ Delete
+                  </IonButton>
+                )}
+              </div>
+
+              <IonItem lines="none">
+                <IonInput
+                  placeholder="Write a comment..."
+                  value={commentInputs[post.id] || ''}
+                  onIonChange={(e) =>
+                    setCommentInputs((prev) => ({
+                      ...prev,
+                      [post.id]: e.detail.value!,
+                    }))
+                  }
+                />
+                <IonButton onClick={() => handleComment(post.id)}>
+                  <IonIcon icon={chatboxEllipsesOutline} />
+                </IonButton>
+              </IonItem>
+
+              {post.comments.length > 0 && (
+                <ul>
+                  {post.comments.map((c, index) => (
+                    <li key={index}>
+                      <IonText>
+                        <IonLabel>- {c}</IonLabel>
+                      </IonText>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </IonCardContent>
+          </IonCard>
+        ))}
+      </IonContent>
+    </IonPage>
+  );
+};
+
+export default Home;
