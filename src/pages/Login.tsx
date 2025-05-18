@@ -1,4 +1,3 @@
-// src/pages/Login.tsx
 import {
   IonButton,
   IonContent,
@@ -6,13 +5,14 @@ import {
   IonPage,
   IonTitle,
   IonToolbar,
-  IonSelect,
-  IonSelectOption,
   useIonRouter,
   IonItem,
   IonLabel,
   IonInput,
   IonToast,
+  IonGrid,
+  IonRow,
+  IonCol,
 } from '@ionic/react';
 import { useState } from 'react';
 
@@ -32,14 +32,15 @@ const Login: React.FC = () => {
     console.log('Logging in as', role, username);
     localStorage.setItem('userRole', role);
     localStorage.setItem('username', username);
-    navigation.push('/it35-lab/app/home/wall', 'forward', 'replace');
+
+    navigation.push('/it35-lab/app/home', 'forward', 'replace');
   };
 
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle className="ion-text-center">Login</IonTitle>
+          <IonTitle className="ion-text-center">CLASS  WALL </IonTitle>
         </IonToolbar>
       </IonHeader>
 
@@ -57,23 +58,40 @@ const Login: React.FC = () => {
             style={{
               width: '100%',
               maxWidth: 400,
-              backgroundColor: '#9acd32', // Yellow-green
+              backgroundColor: '#d4edda',
               padding: '20px',
               borderRadius: '12px',
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
             }}
           >
-            <IonItem>
-              <IonLabel>Login as</IonLabel>
-              <IonSelect
-                placeholder="Select Role"
-                value={role}
-                onIonChange={(e) => setRole(e.detail.value)}
-              >
-                <IonSelectOption value="teacher">Teacher</IonSelectOption>
-                <IonSelectOption value="student">Student</IonSelectOption>
-              </IonSelect>
-            </IonItem>
+            <IonLabel className="ion-text-center" style={{ display: 'block', marginBottom: 10 }}>
+              Login as
+            </IonLabel>
+
+            <IonGrid>
+              <IonRow>
+                <IonCol>
+                  <IonButton
+                    expand="block"
+                    fill={role === 'teacher' ? 'solid' : 'outline'}
+                    color="primary"
+                    onClick={() => setRole('teacher')}
+                  >
+                    Teacher
+                  </IonButton>
+                </IonCol>
+                <IonCol>
+                  <IonButton
+                    expand="block"
+                    fill={role === 'student' ? 'solid' : 'outline'}
+                    color="secondary"
+                    onClick={() => setRole('student')}
+                  >
+                    Student
+                  </IonButton>
+                </IonCol>
+              </IonRow>
+            </IonGrid>
 
             {role && (
               <>
